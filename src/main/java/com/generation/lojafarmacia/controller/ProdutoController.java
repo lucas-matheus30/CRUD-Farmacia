@@ -21,6 +21,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.generation.lojafarmacia.model.Produto;
 import com.generation.lojafarmacia.repository.CategoriaRepository;
 import com.generation.lojafarmacia.repository.ProdutoRepository;
+import com.generation.lojafarmacia.service.ProdutoService;
 
 import jakarta.validation.Valid;
 
@@ -34,6 +35,9 @@ public class ProdutoController {
 
 	@Autowired
 	private CategoriaRepository categoriaRepository;
+	
+	@Autowired
+	private ProdutoService produtoService;
 
 	@GetMapping
 	public ResponseEntity<List<Produto>> getAll() {
@@ -50,7 +54,18 @@ public class ProdutoController {
 	public ResponseEntity<List<Produto>> getByNome(@PathVariable String nome) {
 		return ResponseEntity.ok(produtoRepository.findAllByNomeContainingIgnoreCase(nome));
 	}
-
+	
+	@GetMapping("/estoque/{id}/{quantidadeSolicitada}")
+	public ResponseEntity<String> verificarEstoque(@PathVariable Long id, @PathVariable Integer quantidadeSolicitada){
+		boolean suficiente = produtoService.verificarEstoque(id, quantidadeSolicitada);
+		
+		if(suficiente != true) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Estoque insuficiente.");
+		}
+		String mensagem = "Estoque suficiente!";
+		return ResponseEntity.ok(mensagem);
+	}
+	
 	@PostMapping
 	public ResponseEntity<Produto> post(@Valid @RequestBody Produto produto) {
 		if (categoriaRepository.existsById(produto.getCategoria().getId()))
